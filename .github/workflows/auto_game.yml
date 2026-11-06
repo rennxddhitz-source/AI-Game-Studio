@@ -2,32 +2,39 @@ name: AI Game Generator
 
 on:
   workflow_dispatch:
+  issues:
+    types: [labeled]
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
-  build:
+  build-game:
+    if: github.event.label.name == 'build-game' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@v4
       
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           
-      - run: pip install requests
-      
-      - name: Run AI
+      - name: Install Requests
+        run: pip install requests
+        
+      - name: Run AI Generator
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          ISSUE_BODY: "Buatkan game Ular pakai Canvas"
+          ISSUE_BODY: ${{ github.event.issue.body || 'Buatkan game Ular (Snake) sederhana pakai HTML5 Canvas' }}
         run: python generate.py
         
-      - name: Push to Repo
+      - name: Push to Repository
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Generate Game"
+          git commit -m "🎮 AI Game Generated"
           git push
