@@ -2,11 +2,9 @@ import os
 import requests
 import re
 
-# 1. Ambil data dari environment
 issue_body = os.environ.get('ISSUE_BODY', 'Buatkan game Snake sederhana pakai HTML5 Canvas')
 api_key = os.environ.get('OPENROUTER_API_KEY')
 
-# 2. Instruksi AI
 system_prompt = """Kamu adalah developer game HTML5 profesional. 
 Tulis kode game lengkap berdasarkan permintaan user. 
 ATURAN WAJIB:
@@ -14,7 +12,6 @@ ATURAN WAJIB:
 2. Gunakan HTML5 Canvas. Jangan gunakan aset eksternal, gunakan bentuk/emoji.
 3. Berikan HANYA kode HTML-nya saja (mulai <!DOCTYPE html> sampai </html>). Jangan ada penjelasan teks apapun."""
 
-# 3. Tembak API
 response = requests.post(
     url="https://openrouter.ai/api/v1/chat/completions",
     headers={
@@ -30,12 +27,9 @@ response = requests.post(
     }
 )
 
-# 4. Simpan hasil
 if response.status_code == 200:
     data = response.json()
     game_code = data['choices'][0]['message']['content']
-    
-    # Bersihkan format markdown
     game_code = re.sub(r'```html', '', game_code)
     game_code = re.sub(r'```', '', game_code).strip()
     
