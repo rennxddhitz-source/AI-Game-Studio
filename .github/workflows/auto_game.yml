@@ -1,0 +1,53 @@
+name: AI Game Generator
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch: # Fitur untuk menjalankan manual
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build-game:
+    if: github.event.label.name == 'build-game' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Requests
+        run: pip install requests
+
+      - name: Generate Game via AI
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          ISSUE_BODY: ${{ github.event.issue.body || 'Buatkan game Ular (Snake) sederhana pakai Canvas' }}
+        run: python generate.py
+
+      - name: Commit dan Push index.html
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "🎮 AI Game Generated"
+          git push
+
+      - name: Komentar di Issue (Jika via label)
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **Game berhasil dibuat!**\n\nLihat di: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/`
+            })
