@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Space Shooter</title>
+<style>
+  body { background: #111; color: #fff; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; }
+  canvas { background: #000; display: block; margin: 20px auto; border: 2px solid #333; }
+</style>
+</head>
+<body>
+<h2>Space Shooter</h2>
+<p>Use Left/Right Arrows or A/D to move, Space to shoot.</p>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let player = { x: 180, y: 520, w: 40, h: 25, speed: 6 };
+let bullets = [];
+let enemies = [];
+let score = 0;
+let gameOver = false;
+let keys = {};
+
+window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'Space' && gameOver) resetGame(); });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+function resetGame() {
+  player.x = 180;
+  bullets = [];
+  enemies = [];
+  score = 0;
+  gameOver = false;
+}
+
+let spawnTimer = 0;
+function update() {
+  if (gameOver) return;
+
+  if ((keys['ArrowLeft'] || keys['KeyA']) && player.x > 0) player.x -= player.speed;
+  if ((keys['ArrowRight'] || keys['KeyD']) && player.x < canvas.width - player.w) player.x += player.speed;
+
+  if (keys['Space'] && !player.cooldown) {
+    bullets.push({ x: player.x + player.w/2 - 2, y: player.y, w: 4, h: 10, speed: 8 });
+    player.cooldown = true;
+    setTimeout(() => player.cooldown = false, 200);
+  }
+
+  bullets.forEach(b => b.y -= b.speed);
+  bullets = bullets.filter(b => b.y > 0);
+
+  spawnTimer++;
+  if (spawnTimer > 40) {
+    enemies.push({ x: Math.random() * (canvas.width - 30), y: -30, w: 30, h: 30, speed: 2 + Math.random() * 2 });
+    spawnTimer = 0;
+  }
+
+  enemies.forEach(e => e.y += e.speed);
+
+  bullets.forEach((b, bi) => {
+    enemies.forEach((e, ei) => {
+      if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+        bullets.splice(bi, 1);
+        enemies.splice(ei, 1);
+        score += 10;
+      }
+    });
+  });
+
+  enemies.forEach((e, ei) => {
+    if (e.y > canvas.height) enemies.splice(ei, 1);
+    if (e.x < player.x + player.w && e.x + e.w > player.x && e.y < player.y + player.h && e.y + e.h > player.y) {
+      gameOver = true;
+    }
+  });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = '#0ff';
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  ctx.fillStyle = '#ff0';
+  bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+
+  ctx.fillStyle = '#f00';
+  enemies.forEach(e => ctx.fillRect(e.x, e.y, e.w, e.h));
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('Score: ' + score, 10, 25);
+
+  if (gameOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#fff';
+    ctx.font = '24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 10);
+    ctx.font = '14px sans-serif';
+    ctx.fillText('Press SPACE to restart', canvas.width/2, canvas.height/2 + 20);
+    ctx.textAlign = 'left';
+  }
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
