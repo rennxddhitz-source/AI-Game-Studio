@@ -2,21 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Space Shooter</title>
 <style>
-  body { background: #111; color: #fff; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; }
-  canvas { background: #000; display: block; margin: 20px auto; border: 2px solid #333; }
+  body { background: #111; color: #fff; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; touch-action: none; }
+  h2 { margin: 5px 0; font-size: 18px; }
+  canvas { background: #000; display: block; margin: 5px auto; border: 2px solid #333; max-width: 100%; height: auto; }
+  .controls { display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
+  .btn { background: #333; color: #fff; border: 2px solid #555; font-size: 22px; padding: 15px 30px; border-radius: 8px; user-select: none; -webkit-user-select: none; outline: none; cursor: pointer; }
+  .btn:active { background: #555; }
 </style>
 </head>
 <body>
 <h2>Space Shooter</h2>
-<p>Use Left/Right Arrows or A/D to move, Space to shoot.</p>
-<canvas id="gameCanvas" width="400" height="600"></canvas>
+<canvas id="gameCanvas" width="400" height="480"></canvas>
+<div class="controls">
+  <button class="btn" id="leftBtn">&#9664;</button>
+  <button class="btn" id="shootBtn">&#9673;</button>
+  <button class="btn" id="rightBtn">&#9654;</button>
+</div>
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-let player = { x: 180, y: 520, w: 40, h: 25, speed: 6 };
+let player = { x: 180, y: 420, w: 40, h: 25, speed: 6 };
 let bullets = [];
 let enemies = [];
 let score = 0;
@@ -25,6 +34,22 @@ let keys = {};
 
 window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'Space' && gameOver) resetGame(); });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+function setupButton(id, code) {
+  const el = document.getElementById(id);
+  const press = (e) => { e.preventDefault(); keys[code] = true; if(gameOver && code === 'Space') resetGame(); };
+  const release = (e) => { e.preventDefault(); keys[code] = false; };
+  
+  el.addEventListener('mousedown', press);
+  el.addEventListener('mouseup', release);
+  el.addEventListener('mouseleave', release);
+  el.addEventListener('touchstart', press);
+  el.addEventListener('touchend', release);
+}
+
+setupButton('leftBtn', 'ArrowLeft');
+setupButton('rightBtn', 'ArrowRight');
+setupButton('shootBtn', 'Space');
 
 function resetGame() {
   player.x = 180;
@@ -100,7 +125,7 @@ function draw() {
     ctx.textAlign = 'center';
     ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 10);
     ctx.font = '14px sans-serif';
-    ctx.fillText('Press SPACE to restart', canvas.width/2, canvas.height/2 + 20);
+    ctx.fillText('Tap Shoot to restart', canvas.width/2, canvas.height/2 + 20);
     ctx.textAlign = 'left';
   }
 }
